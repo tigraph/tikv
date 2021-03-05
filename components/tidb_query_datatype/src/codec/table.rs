@@ -146,11 +146,42 @@ pub fn flatten(ctx: &mut EvalContext, data: Datum) -> Result<Datum> {
 }
 
 pub fn encode_graph_tag(vertex_id: i64, tag_id: i64) -> Vec<u8> {
-    let mut key  = Vec::with_capacity(24);
-    key.extend(GRAPH_PREFIX);
-    key.extend(RECORD_PREFIX_SEP);
+    let mut key = Vec::with_capacity(24);
+    key.write_bytes(GRAPH_PREFIX).unwrap();
+    key.write_bytes(RECORD_PREFIX_SEP).unwrap();
     key.write_i64(vertex_id).unwrap();
     key.write_i64(tag_id).unwrap();
+
+    key
+}
+
+pub fn encode_graph_edge(src_vertex_id: i64, dst_vertex_id: i64, edge_id: i64, tp: u8) -> Vec<u8> {
+    let mut key = Vec::with_capacity(32);
+    key.write_bytes(GRAPH_PREFIX).unwrap();
+    key.write_bytes(RECORD_PREFIX_SEP).unwrap();
+    key.write_i64(src_vertex_id).unwrap();
+    key.push(tp);
+    key.write_i64(edge_id).unwrap();
+    key.write_i64(dst_vertex_id).unwrap();
+
+    key
+}
+
+pub fn construct_key_for_graph_traverse(
+    src_or_dst_vertex_id: i64,
+    is_out: bool,
+    edge_id: i64,
+) -> Vec<u8> {
+    let mut key = Vec::with_capacity(32);
+    key.write_bytes(GRAPH_PREFIX).unwrap();
+    key.write_bytes(RECORD_PREFIX_SEP).unwrap();
+    key.write_i64(src_or_dst_vertex_id).unwrap();
+    if is_out {
+        key.push(GRAPH_EDGE_OUT);
+    } else {
+        key.push(GRAPH_EDGE_IN)
+    }
+    key.write_i64(edge_id).unwrap();
 
     key
 }
